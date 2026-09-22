@@ -1,0 +1,37 @@
+/* Regolithic theme — see TECHNICAL_SPEC.md §4.1 */
+:root {
+  --color-fg-primary: #e8e8e8;
+  --color-fg-secondary: #787878;
+  --color-accent: #0000d0;
+  --color-bg: #05050a; /* deep space base; nebula/interstellar imagery layers on top */
+
+  /* Dichromatic-safe accent pairing — state should never rely on hue alone. */
+  --color-state-ok-icon: "✓";
+  --color-state-warn-icon: "!";
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  color: var(--color-fg-primary);
+  font-family: system-ui, sans-serif;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+/* Touch targets sized for varying finger sizes / motor control speeds — TECHNICAL_SPEC.md §4.3 */
+button,
+[role="button"],
+input,
+select {
+  min-height: 44px;
+  min-width: 44px;
+}

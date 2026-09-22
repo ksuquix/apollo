@@ -1,0 +1,113 @@
+// Apollo Adventure Park — data model
+// See ../../TECHNICAL_SPEC.md for the requirements this maps to.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Species {
+  TERRAN
+  CENTAURIAN
+}
+
+enum POIType {
+  ATTRACTION
+  SHOP
+  RESTAURANT
+}
+
+enum POIStatus {
+  OPEN
+  CLOSED
+  UNDER_CONSTRUCTION
+}
+
+enum TicketDeliveryChannel {
+  EMAIL
+  DEVICE_DOWNLOAD
+  CYBERNETIC_IMPLANT
+}
+
+model Patron {
+  id           String   @id @default(uuid())
+  email        String?  @unique
+  species      Species
+  birthDate    DateTime
+  createdAt    DateTime @default(now())
+  tickets      Ticket[]
+}
+
+model PricingRule {
+  id                String   @id @default(uuid())
+  name              String
+  // e.g. "child", "senior", "group" — see TECHNICAL_SPEC.md §2.1
+  discountPct       Decimal  @db.Decimal(5, 4)
+  excludedOnHoliday Boolean  @default(true)
+  minAgeTerran      Int?
+  minAgeCentaurian  Int?
+  minGroupSize      Int?
+  active            Boolean  @default(true)
+}
+
+model LunarHoliday {
+  id        String   @id @default(uuid())
+  name      String
+  date      DateTime
+  // source calendar this was ingested from — see open question in TECHNICAL_SPEC.md §6
+  source    String?
+}
+
+model Ticket {
+  id               String                @id @default(uuid())
+  patron           Patron                @relation(fields: [patronId], references: [id])
+  patronId         String
+  basePrice        Decimal               @db.Decimal(10, 2)
+  discountApplied  Decimal               @db.Decimal(10, 2) @default(0)
+  lunarTaxRate     Decimal               @db.Decimal(6, 5) @default(0.05000)
+  finalPrice       Decimal               @db.Decimal(10, 2)
+  qrCode           String                @unique
+  holocubeCode     String                @unique
+  deliveryChannel  TicketDeliveryChannel
+  eMacTransferId   String?               // only set when deliveryChannel = CYBERNETIC_IMPLANT
+  visitDate        DateTime
+  createdAt        DateTime              @default(now())
+}
+
+model PointOfInterest {
+  id            String    @id @default(uuid())
+  slug          String    @unique
+  type          POIType
+  name          String
+  descriptionText String
+  voiceoverUrl  String?
+  imageUrls     String[]
+  videoUrl      String?
+  holoAssetUrl  String?   // .stl or volumetric asset for holographic upscale
+  waitTimeMins  Int?
+  status        POIStatus @default(OPEN)
+  updatedAt     DateTime  @updatedAt
+  offerings     POIOffering[]
+}
+
+model POIOffering {
+  id      String          @id @default(uuid())
+  poi     PointOfInterest @relation(fields: [poiId], references: [id])
+  poiId   String
+  name    String
+  price   Decimal         @db.Decimal(10, 2)
+}
+
+model ParkEvent {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  isHoliday   Boolean  @default(false)
+  origin      String?  // "earth" | "otherworld" | "lunar-cycle"
+}
